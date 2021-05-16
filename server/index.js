@@ -34,6 +34,10 @@ app.use('/api/news', news)
 app.use('/api/contacts', contacts)
 app.use('/api/places', places)
 app.use('/api/tours', tours)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(__dirname + '/public/'))
+  app.get(/.*/, (req, res) => res.sendFile(__dirname + '/public/index.html'))
+}
 // START CHAT
 const User = require('./models/user')
 const Tour = require('./models/tour')
