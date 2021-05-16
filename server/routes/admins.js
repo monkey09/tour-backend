@@ -52,7 +52,7 @@ const fileFilter = function (req, file, cb) {
 // Detetmine the distenation and the image name
 const MAX_SIZE = 2000000
 const storage = multer.diskStorage({
-  destination: './client/src/assets/profiles/',
+  destination: './server/public/img/',
   filename: async function (req, file, cb){
     await crypto.pseudoRandomBytes(16, function (err, raw) {
       cb(null, raw.toString('hex') + Date.now() + path.extname(file.originalname))
@@ -79,7 +79,7 @@ router.post('/uploadimage', auth, upload.single("file"), async (req, res) => {
     setTimeout(() => {
       res.send(admin)
       if (avatar != '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg') {
-        fs.unlinkSync(`./client/src/assets/profiles/${avatar}`)
+        fs.unlinkSync(`./server/public/img/${avatar}`)
       }
     }, 1000)
   } catch (e) {
@@ -110,7 +110,7 @@ router.delete('/deleteimage', auth, async (req, res) => {
     }
     admin['avatar'] = '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg'
     await admin.save()
-    fs.unlinkSync(`./client/src/assets/profiles/${avatar}`)
+    fs.unlinkSync(`./server/public/img/${avatar}`)
     res.send(admin)
   } catch (e) {
     res.status(500).send()

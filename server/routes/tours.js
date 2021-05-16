@@ -95,7 +95,7 @@ const fileFilter = function (req, file, cb) {
 // Detetmine the distenation and the image name
 const MAX_SIZE = 2000000
 const storage = multer.diskStorage({
-  destination: './client/src/assets/tours/',
+  destination: './server/public/img/',
   filename: async function (req, file, cb){
     await crypto.pseudoRandomBytes(16, function (err, raw) {
       cb(null, raw.toString('hex') + Date.now() + path.extname(file.originalname))
@@ -153,7 +153,7 @@ router.delete('/deletetour/:id', async (req, res) => {
       await user.save()
     })
     const tour = await Tour.findByIdAndDelete(req.params.id)
-    fs.unlinkSync(`./client/src/assets/tours/${tour.image}`)
+    fs.unlinkSync(`./server/public/img/${tour.image}`)
     res.status(200).send()
   } catch (e) {
     res.status(500).send()

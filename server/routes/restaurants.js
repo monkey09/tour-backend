@@ -54,7 +54,7 @@ const fileFilter = function (req, file, cb) {
 // Detetmine the distenation and the image name
 const MAX_SIZE = 2000000
 const storage = multer.diskStorage({
-  destination: './client/src/assets/restaurants/',
+  destination: './server/public/img/',
   filename: async function (req, file, cb){
     await crypto.pseudoRandomBytes(16, function (err, raw) {
       cb(null, raw.toString('hex') + Date.now() + path.extname(file.originalname))
@@ -116,7 +116,7 @@ router.delete('/:id', auth, async (req, res) => {
       user['restaurant.reservation'] = '0'
       await user.save()
     })
-    fs.unlinkSync(`./client/src/assets/restaurants/${restaurant.image}`)
+    fs.unlinkSync(`./server/public/img/${restaurant.image}`)
     res.send()
   } catch (e) {
     res.status(500).send()
