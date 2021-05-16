@@ -1,13 +1,69 @@
+const http = require('http')
 const express = require('express')
+const socketio = require('socket.io')
 const cors = require('cors')
 require('./db/mongoose')
 const app = express()
-
-app.use(cors())
-
+const server = http.createServer(app)
+const io = socketio(server)
+const admins = require('./routes/admins')
+const users = require('./routes/users')
+const tourguides = require('./routes/tourguides')
 const posts = require('./routes/posts')
-app.use('/posts', posts)
-
+const comments = require('./routes/comments')
+const hotels = require('./routes/hotels')
+const restaurants = require('./routes/restaurants')
+const transportations = require('./routes/transportations')
+const pharmacies = require('./routes/pharmacies')
+const news = require('./routes/news')
+const contacts = require('./routes/contacts')
+const places = require('./routes/places')
+const tours = require('./routes/tours')
+app.use(express.json())
+app.use(cors())
+app.use('/api/admins', admins)
+app.use('/api/users', users)
+app.use('/api/tourguides', tourguides)
+app.use('/api/posts', posts)
+app.use('/api/comments', comments)
+app.use('/api/hotels', hotels)
+app.use('/api/restaurants', restaurants)
+app.use('/api/transportations', transportations)
+app.use('/api/pharmacies', pharmacies)
+app.use('/api/news', news)
+app.use('/api/contacts', contacts)
+app.use('/api/places', places)
+app.use('/api/tours', tours)
+// START CHAT
+const User = require('./models/user')
+const Tour = require('./models/tour')
+io.on('connection', socket => {
+  console.log('one joined')
+  socket.on('logedIn', async id => {
+    const user = await User.findById(id)
+    socket.join(user.tour)
+    io.to(user.tour).emit('userJoined')
+  })
+  socket.on('logedIn2', async id => {
+    const tours = await Tour.find({ creator: id })
+    tours.forEach(tour => {
+      socket.join(tour._id)
+      io.to(tour._id).emit('userJoined')
+    })
+  })
+  socket.on('leaveRoom', room => {
+    socket.leave(room)
+    io.to(room).emit('userLefted')
+  })
+  socket.on('sendMessage', async message => {
+    const tour = await Tour.findById(message.room)
+    await tour.pushMessage(message.message, message.userId)
+    io.to(message.room).emit('message', {content: message.message, userId: message.userId, clock: Date.now(), room:message.room})
+  })
+  socket.on('disconnect', () => {
+    console.log(`one lefted`)
+  })
+})
+// END CHAT
 const port = process.env.PORT || 5000
-app.listen(port, () => console.log(`Server started on port ${port}`))
-
+server.listen(port, () => console.log(`Server started on port ${port}`))
