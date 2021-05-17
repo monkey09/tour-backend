@@ -42,7 +42,6 @@ if (process.env.NODE_ENV === 'production') {
 const User = require('./models/user')
 const Tour = require('./models/tour')
 io.on('connection', socket => {
-  console.log('one joined')
   socket.on('logedIn', async id => {
     const user = await User.findById(id)
     socket.join(user.tour)

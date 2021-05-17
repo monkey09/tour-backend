@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken')
 const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
-    default: '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg'
+    default: 'https://res.cloudinary.com/tourists-services/image/upload/v1621157724/bwnum00a1iab3dp3rhjf.jpg'
   },
   name: {
     type: String,

@@ -2,9 +2,13 @@ const express = require('express')
 const Tourguide = require('../models/tourguide')
 const auth = require('../middleware/auth')
 const multer = require('multer')
-const crypto = require('crypto-browserify')
-const path = require('path')
-const fs = require('fs')
+const cloudinary = require('cloudinary').v2
+const streamifier = require('streamifier')
+cloudinary.config({
+  cloud_name: 'tourists-services',
+  api_key: '521318868529862',
+  api_secret: 'GtQwqyuIxTKx0Nh-39mDxBmetas',
+})
 const router = new express.Router()
 
 // Signup tourguide
@@ -81,79 +85,39 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Upload tourguide profile image
-const fileFilter = function (req, file, cb) {
-  const allowedTypes = ['image/jpg', 'image/png', 'image/jpeg']
-  if (!allowedTypes.includes(file.mimetype)) {
-    const error = new Error("Wrong file type!")
-    error.code = "LIMIT_FILE_TYPES"
-    return cb(error, false)
-  }
-  cb(null, true)
-}
-
-// Detetmine the distenation and the image name
-const MAX_SIZE = 2000000
-const storage = multer.diskStorage({
-  destination: './server/public/img/',
-  filename: async function (req, file, cb){
-    await crypto.pseudoRandomBytes(16, function (err, raw) {
-      cb(null, raw.toString('hex') + Date.now() + path.extname(file.originalname))
+// Upload the image
+const fileUpload = multer()
+router.post('/uploadimage', auth, fileUpload.single('file'), function (req, res, next) {
+  let streamUpload = (req) => {
+    return new Promise((resolve, reject) => {
+      let stream = cloudinary.uploader.upload_stream(
+        (error, result) => {
+          if (result) {
+            resolve(result)
+          } else {
+            reject(error)
+          }
+        }
+      )
+      streamifier.createReadStream(req.file.buffer).pipe(stream)
     })
   }
-})
-
-// Initiate multer
-const upload = multer({
-  storage: storage,
-  fileFilter,
-  limits: {
-    fileSize: MAX_SIZE
-  }
-})
-
-// Upload the image
-router.post('/uploadimage', auth, upload.single("file"), async (req, res) => {
-  try {
-    const avatar = req.tourguide.avatar
+  async function upload(req) {
+    let result = await streamUpload(req)
     const tourguide = req.tourguide
-    tourguide['avatar'] = req.file.filename
+    tourguide['avatar'] = result.secure_url
     await tourguide.save()
-    setTimeout(() => {
-      res.send(tourguide)
-      if (avatar != '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg') {
-        fs.unlinkSync(`./server/public/img/${avatar}`)
-      }
-    }, 1000)
-  } catch (e) {
-    res.status(400).send()
-  }
-})
-
-// Limit type and size of the image
-router.use(function(err, req, res, next) {
-  if (err.code === "LIMIT_FILE_TYPES") {
-    res.status(422).send()
-    return
-  }
-  if (err.code === "LIMIT_FILE_SIZE") {
-    res.status(422).send()
-    return
-  }
+    res.send(tourguide)
+  }  
+  upload(req)
 })
 
 // Delete tourguide avatar
 router.delete('/deleteimage', auth, async (req, res) => {
   try {
-    const avatar = req.tourguide.avatar
     const tourguide = req.tourguide
-    if (avatar == '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg') {
-      res.send(tourguide)
-      return
-    }
-    tourguide['avatar'] = '37fa4d5d0a9260b4cfae2eef989d51bf1620687131345.jpeg'
+    tourguide['avatar'] = 'https://res.cloudinary.com/tourists-services/image/upload/v1621157724/bwnum00a1iab3dp3rhjf.jpg'
     await tourguide.save()
-    fs.unlinkSync(`./server/public/img/${avatar}`)
     res.send(tourguide)
   } catch (e) {
     res.status(500).send()
